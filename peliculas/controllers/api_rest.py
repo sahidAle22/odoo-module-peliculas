@@ -1,10 +1,7 @@
 # -*- coding:utf-8 -*-
-
-from odoo.http import Controller, request, route
+from odoo.http import Controller, request, route, Response
 from odoo import http
 import json
-from odoo.http import Response
-from odoo.http import request
 CORS = '*'
 
 class PresupuestoController(Controller):
@@ -36,16 +33,12 @@ class PresupuestoController(Controller):
         if not presupuesto:
             return Response(json.dumps({'error': 'El presupuesto no existe'}), status=404, content_type='application/json')
 
-        print(presupuesto,"\nholA")
-
-        # Formatear los generos [{id,name}]
         generos = request.env['genero'].sudo().search_read([])
         generoData = []
         for genero in generos:
             if genero['id'] in presupuesto[0]['generos_ids']:
                 generoData.append({"id": genero['id'], "name": genero['name']})
 
-        # Formatear los actores [{id,name}]
         actores = http.request.env['res.partner'].sudo().search_read([('category_id', '=', 'Actor')], ['name'])
         actorData = []
         for actor in actores:
@@ -56,7 +49,8 @@ class PresupuestoController(Controller):
         presupuesto[0]['generos_ids'] = generoData
         presupuesto[0]['fch_creacion'] = presupuesto[0]['fch_creacion'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         return Response(json.dumps(presupuesto[0]), content_type='application/json', status=200)
-    @route('/api/presupuesto/create',type='json', auth='public', cors='*', csrf=False, methods=['POST','OPTIONS'])
+
+    @route('/api/presupuesto/crear',type='json', auth='public', cors='*', csrf=False, methods=['POST','OPTIONS'])
     def create_presupuesto(self, **params):
         if request.httprequest.method == 'OPTIONS':
             headers = {
@@ -88,7 +82,6 @@ class PresupuestoController(Controller):
         del params['idPresupuesto']
         params['generos_ids'] = [[6, False, params['generos_ids']]]
         params['actor_ids'] = [[6, False, params['actor_ids']]]
-        print(params)
 
         presupuesto = request.env['presupuesto'].sudo().search([('id', '=', id)])
 
@@ -99,8 +92,7 @@ class PresupuestoController(Controller):
         updated_presupuesto = request.env['presupuesto'].browse(id)
         return json.dumps({'id': updated_presupuesto.id, 'name': updated_presupuesto.name}), 200
 
-
-    @http.route('/presupuestos/delete', auth='none', type='json', cors=CORS, methods=['POST','OPTIONS'], csrf=False)
+    @http.route('/api/presupuesto/eliminar', auth='none', type='json', cors=CORS, methods=['POST','OPTIONS'], csrf=False)
     def delete_presupuesto(self, **params):
         if request.httprequest.method == 'OPTIONS':
             headers = {
@@ -132,6 +124,7 @@ class PresupuestoController(Controller):
         campos = ['name']
         generos = http.request.env['genero'].sudo().search_read([], campos)
         return Response(json.dumps(generos), content_type='application/json', status=200)
+
     @http.route('/api/directores', type='http', auth='public', cors='*', csrf=False, methods=['GET'])
     def get_Directores(self):
         campos = ['name']
